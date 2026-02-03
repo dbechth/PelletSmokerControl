@@ -2,8 +2,6 @@
 #include "AC2.h"
 #include <WiFiClient.h>
 #include <SPI.h>
-#include <Wire.h>
-#include <Servo.h>
 #include "max6675.h"
 #include "SmokerControl.h"
 #include "SmokerOutputs.h"
@@ -16,9 +14,9 @@ SmokerData smokerData = {
 	.smokesetpoint = 0.0f,
 	.recipeStepIndex = 0,
 	.selectedRecipeIndex = -1,
-	.igniter = SmokerData::Mode::Off,
-	.auger = SmokerData::Mode::Off,
-	.fan = SmokerData::Mode::Off};
+	.igniter = {.mode = ActuatorControl::Mode::Off, .dutyCycle = 0.0f, .frequency = 0.0f},
+	.auger = {.mode = ActuatorControl::Mode::Off, .dutyCycle = 0.0f, .frequency = 0.0f},
+	.fan = {.mode = ActuatorControl::Mode::Off, .dutyCycle = 0.0f, .frequency = 0.0f}};
 
 SmokerConfig smokerConfig = {
 	.minAutoRestartTemp = 100.0f,
@@ -40,8 +38,6 @@ int thermoDO = 21;
 int thermoCLK = 19;
 int thermoCS = 5;
 int thermoCS2 = 18;
-// int pinInletDamper = D1;
-// int pinOutletDamper = D2;
 
 int augerPin = 32;	 // Relay 1
 int fanPin = 33;	 // Relay 2
@@ -52,7 +48,7 @@ constexpr int On = HIGH;
 constexpr int Off = LOW;
 
 MAX6675 smokechamberthermocouple(thermoCLK, thermoCS2, thermoDO);
-MAX6675 fireboxthermocouple(thermoCLK, thermoCS, thermoDO);
+MAX6675 firepotthermocouple(thermoCLK, thermoCS, thermoDO);
 static float smokechamberTemperature = 0;
 static float firepotTemperature = 0;
 
@@ -182,6 +178,7 @@ void setup()
 	initRecipeDefaults();
 
 	smokerData.filteredSmokeChamberTemp = smokechamberthermocouple.readFahrenheit();
+	smokerData.filteredFirePotTemp = firepotthermocouple.readFahrenheit();
 
 	// Initialize state machine timing
 	lastStateUpdateTime = millis();
@@ -193,7 +190,7 @@ void loop()
 	AC2.task(); // This application manages its own taskrate
 
 	smokechamberTemperature = smokechamberthermocouple.readFahrenheit();
-	firepotTemperature = fireboxthermocouple.readFahrenheit();
+	firepotTemperature = firepotthermocouple.readFahrenheit();
 
 	smokerData.filteredSmokeChamberTemp = ((smokechamberTemperature * 0.5) + (smokerData.filteredSmokeChamberTemp * 0.5));
 	smokerData.filteredFirePotTemp = ((firepotTemperature * 0.5) + (smokerData.filteredFirePotTemp * 0.5));

@@ -47,27 +47,29 @@ struct Recipe {
     bool enabled;                   // whether this recipe is enabled
 };
 
-struct SmokerData {
+struct ActuatorControl {
     enum class Mode 
     {
         Off = 0,
         On = 1,
         Auto = 2,
     };
+    Mode mode;              // operating mode (Off/On/Auto)
+    float dutyCycle;        // duty cycle for PWM in auto mode (0-100%)
+    float frequency;        // frequency for PWM in auto mode (Hz)
+};
+
+struct SmokerData {
     float filteredSmokeChamberTemp;
     float filteredFirePotTemp;
     float setpoint;                 // current temperature setpoint (F)
     float smokesetpoint;            // current smoke setpoint (%)
     int recipeStepIndex;
     int selectedRecipeIndex;
-    Mode igniter; // igniter mode (Off/On)
-    Mode auger;   // auger control mode
-    Mode fan;     // fan control mode
+    ActuatorControl igniter;        // igniter control (mode, duty cycle, frequency)
+    ActuatorControl auger;          // auger control (mode, duty cycle, frequency)
+    ActuatorControl fan;            // fan control (mode, duty cycle, frequency)
 };
-
-    struct OutputData{
-        float DutyCycle;
-    };
     
 struct SmokerConfig {
     float minAutoRestartTemp;        // temp threshold to auto-restart if cold

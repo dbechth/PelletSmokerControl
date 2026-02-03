@@ -30,9 +30,9 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // entry
         if (firstEntry)
         {
-            smokerData.auger = SmokerData::Mode::Off;
-            smokerData.fan = SmokerData::Mode::Off;
-            smokerData.igniter = SmokerData::Mode::Off;
+            smokerData.auger.mode = ActuatorControl::Mode::Off;
+            smokerData.fan.mode = ActuatorControl::Mode::Off;
+            smokerData.igniter.mode = ActuatorControl::Mode::Off;
         }
 
         // during
@@ -58,9 +58,9 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // entry
         if (firstEntry)
         {
-            smokerData.auger = SmokerData::Mode::Off;
-            smokerData.fan = SmokerData::Mode::Off;
-            smokerData.igniter = SmokerData::Mode::Off;
+            smokerData.auger.mode = ActuatorControl::Mode::Off;
+            smokerData.fan.mode = ActuatorControl::Mode::Off;
+            smokerData.igniter.mode = ActuatorControl::Mode::Off;
         }
 
         // during
@@ -82,9 +82,9 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // entry
         if (firstEntry)
         {
-            smokerData.auger = SmokerData::Mode::On;
-            smokerData.fan = SmokerData::Mode::Off;
-            smokerData.igniter = SmokerData::Mode::Off;
+            smokerData.auger.mode = ActuatorControl::Mode::On;
+            smokerData.fan.mode = ActuatorControl::Mode::Off;
+            smokerData.igniter.mode = ActuatorControl::Mode::Off;
         }
 
         // exit (placeholder)
@@ -104,9 +104,9 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // entry
         if (firstEntry)
         {
-            smokerData.auger = SmokerData::Mode::On;
-            smokerData.fan = SmokerData::Mode::Off;
-            smokerData.igniter = SmokerData::Mode::On;
+            smokerData.auger.mode = ActuatorControl::Mode::On;
+            smokerData.fan.mode = ActuatorControl::Mode::Off;
+            smokerData.igniter.mode = ActuatorControl::Mode::On;
         }
 
         // exit (placeholder)
@@ -130,9 +130,9 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // entry
         if (firstEntry)
         {
-            smokerData.auger = SmokerData::Mode::On;
-            smokerData.fan = SmokerData::Mode::Auto;
-            smokerData.igniter = SmokerData::Mode::On;
+            smokerData.auger.mode = ActuatorControl::Mode::On;
+            smokerData.fan.mode = ActuatorControl::Mode::Auto;
+            smokerData.igniter.mode = ActuatorControl::Mode::On;
         }
 
         // exit (placeholder)
@@ -156,9 +156,9 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         {
             smokerData.setpoint = smokerConfig.minIdleTemp; // 175 degrees F
 
-            smokerData.auger = SmokerData::Mode::Auto;
-            smokerData.fan = SmokerData::Mode::Auto;
-            smokerData.igniter = SmokerData::Mode::Off;    
+            smokerData.auger.mode = ActuatorControl::Mode::Auto;
+            smokerData.fan.mode = ActuatorControl::Mode::Auto;
+            smokerData.igniter.mode = ActuatorControl::Mode::Off;    
             idleTempReached = false;   
         }
 
@@ -211,9 +211,9 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // entry
         if (firstEntry)
         {
-            smokerData.auger = SmokerData::Mode::Auto;
-            smokerData.fan = SmokerData::Mode::Auto;
-            smokerData.igniter = SmokerData::Mode::Off; 
+            smokerData.auger.mode = ActuatorControl::Mode::Auto;
+            smokerData.fan.mode = ActuatorControl::Mode::Auto;
+            smokerData.igniter.mode = ActuatorControl::Mode::Off; 
 
             smokerData.setpoint = smokerConfig.recipeData[smokerData.selectedRecipeIndex].steps[smokerData.recipeStepIndex].startTempSetpoint;
             smokerData.smokesetpoint = smokerConfig.recipeData[smokerData.selectedRecipeIndex].steps[smokerData.recipeStepIndex].startSmokeSetpoint;
