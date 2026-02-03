@@ -48,31 +48,31 @@ struct Recipe {
 };
 
 struct SmokerData {
-    float filteredSmokeChamberTemp;
-    float filteredFireBoxTemp;
-    float setpoint;                 // current temperature setpoint (F)
-    float smokesetpoint;            // current smoke setpoint (arbitrary units)
-    int recipeStepIndex;
-    int selectedRecipeIndex;
-
-    struct OutputData{
-        DutyCycle
-    }
-    }
-    enum class Mode {
+    enum class Mode 
+    {
         Off = 0,
         On = 1,
         Auto = 2,
-      };
+    };
+    float filteredSmokeChamberTemp;
+    float filteredFirePotTemp;
+    float setpoint;                 // current temperature setpoint (F)
+    float smokesetpoint;            // current smoke setpoint (%)
+    int recipeStepIndex;
+    int selectedRecipeIndex;
     Mode igniter; // igniter mode (Off/On)
     Mode auger;   // auger control mode
     Mode fan;     // fan control mode
 };
 
+    struct OutputData{
+        float DutyCycle;
+    };
+    
 struct SmokerConfig {
     float minAutoRestartTemp;        // temp threshold to auto-restart if cold
     float minIdleTemp;               // idle temperature to maintain after startup
-    float fireBoxBurningTemp;        // firebox temp considered "burning"
+    float firePotBurningTemp;        // firebox temp considered "burning"
     unsigned long startupFillTime;   // how long to run auger to fill (ms)
     unsigned long igniterPreheatTime;// igniter preheat duration (ms)
     unsigned long stabilizeTime;     // time to stabilize at idle temp (ms)
@@ -81,10 +81,10 @@ struct SmokerConfig {
 };
 
 struct UserInputs {
-    bool web_start;
-    bool btn_start;
-    bool web_shutdown;
-    bool btn_shutdown;
+    bool startup;
+    bool automode;
+    bool manualmode;
+    bool shutdown;
 };
 
 // ============================================================================

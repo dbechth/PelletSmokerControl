@@ -66,7 +66,7 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // during
 
         // exit (placeholder)
-        if (uiData.web_start || uiData.btn_start)
+        if (uiData.startup)
         {
             RequestStateTransition(State::Startup_FillFirePot);
         }
@@ -114,7 +114,7 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         {
             RequestStateTransition(State::Startup_PuffFan);
         }
-        else if(smokerData.filteredFireBoxTemp >= smokerConfig.fireBoxBurningTemp) // 200 degrees F
+        else if(smokerData.filteredFirePotTemp >= smokerConfig.firePotBurningTemp) // 200 degrees F
         {
             RequestStateTransition(State::Startup_Stabilize);
         }
@@ -136,7 +136,7 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         }
 
         // exit (placeholder)
-        if (smokerData.filteredFireBoxTemp >= smokerConfig.fireBoxBurningTemp || 
+        if (smokerData.filteredFirePotTemp >= smokerConfig.firePotBurningTemp || 
             smokerData.filteredSmokeChamberTemp >= smokerConfig.minAutoRestartTemp)
         {
             RequestStateTransition(State::Startup_Stabilize);
@@ -275,7 +275,7 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // during
 
         // exit (placeholder)
-        if (uiData.web_shutdown || uiData.btn_shutdown)
+        if (uiData.shutdown)
         {
             RequestStateTransition(State::Shutdown_Cool);
         }
