@@ -128,10 +128,32 @@ void AugerControlTask()
             dutyCycleArray[i] = smokerConfig.tunable.augerTransferFunc[i][0];
             tempArray[i] = smokerConfig.tunable.augerTransferFunc[i][1];
         }
+        
+        float dutyCycleOffset = 0.0f;
+        if (smokerData.filteredSmokeChamberTemp >= smokerConfig.operating.setpoint + 5.0f)
+        {
+            dutyCycleOffset = -10.0f;
+        }
+        else if (smokerData.filteredSmokeChamberTemp <= smokerConfig.operating.setpoint - 5.0f)
+        {
+            dutyCycleOffset = 10.0f; 
+        }
+        else
+        {
+            dutyCycleOffset = (smokerConfig.operating.setpoint - smokerData.filteredSmokeChamberTemp) * (10.0f / 5.0f); //bad proportional control, just for testing
+        }
+
+        if (abs(dutyCycleOffset) < 5.0f)
+        {
+            dutyCycleOffset = 0.0f; // add a deadband to prevent constant small adjustments
+        }
+
         // Interpolate setpoint to get auto duty cycle
         smokerData.auger.dutyCycle = lookupTableInterpolate(smokerConfig.operating.setpoint, tempArray, dutyCycleArray, 11);
+        smokerData.auger.dutyCycle += dutyCycleOffset; // apply offset based on current temp vs setpoint
+
         break;
-    }
+    
 
     case AugerControl::Mode::Manual:
         // Manual mode: Use duty cycle from smokerData

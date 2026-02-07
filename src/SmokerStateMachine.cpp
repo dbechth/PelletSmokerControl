@@ -222,8 +222,6 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
 
         if (firstEntry)
         {
-            smokerConfig.operating.setpoint = smokerConfig.tunable.minIdleTemp;
-
             smokerData.auger.mode = AugerControl::Mode::Auto;
             smokerData.fan.mode = FanControl::Mode::On;
             smokerData.igniter.mode = IgniterControl::Mode::Off;
@@ -383,7 +381,7 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // during
 
         // exit (placeholder)
-        if (smokerData.filteredSmokeChamberTemp <= smokerConfig.tunable.minAutoRestartTemp || smokerData.filteredFirePotTemp <= smokerConfig.tunable.firePotBurningTemp)
+        if (smokerData.filteredFirePotTemp <= smokerConfig.tunable.firePotBurningTemp || stateTimer >= (10 * 60 * 1000UL))
         {
             RequestStateTransition(State::Shutdown_AllOff);
         }
