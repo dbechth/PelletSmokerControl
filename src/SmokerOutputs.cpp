@@ -153,7 +153,7 @@ void AugerControlTask()
         smokerData.auger.dutyCycle += dutyCycleOffset; // apply offset based on current temp vs setpoint
 
         break;
-    
+    }
 
     case AugerControl::Mode::Manual:
         // Manual mode: Use duty cycle from smokerData
