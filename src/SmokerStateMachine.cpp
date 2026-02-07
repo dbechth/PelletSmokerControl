@@ -1,16 +1,16 @@
 #include "SmokerStateMachine.h"
 #include <cstring>
 
-bool idleTempReached = false;   
+bool idleTempReached = false;
 
 // Implementation of the SmokerStateMachine class
 SmokerStateMachine::SmokerStateMachine()
-        : activeState(State::InitialConditions),
-            firstEntry(true),
-            stateTimer(0),
-            resetTimer(false),
-            transitionRequested(false),
-            requestedState(State::InitialConditions)
+    : activeState(State::InitialConditions),
+      firstEntry(true),
+      stateTimer(0),
+      resetTimer(false),
+      transitionRequested(false),
+      requestedState(State::InitialConditions)
 {
 }
 
@@ -19,7 +19,7 @@ void SmokerStateMachine::ProcessButtonInputs()
     // Check all button inputs and request state transitions accordingly
     if (uiData.btn_Startup)
     {
-        RequestStateTransition(State::InitialConditions);
+        RequestStateTransition(State::Startup_FillFirePot);
         uiData.btn_Startup = false;
     }
     else if (uiData.btn_Auto)
@@ -39,25 +39,40 @@ void SmokerStateMachine::ProcessButtonInputs()
     }
 }
 
-const char* SmokerStateMachine::GetStateName(State state)
+const char *SmokerStateMachine::GetStateName(State state)
 {
     switch (state)
     {
-    case State::InitialConditions: return "Check for Hot Start";
-    case State::Startup_WaitForStart: return "Waiting for Start";
-    case State::Startup_FillFirePot: return "Filling";
-    case State::Startup_IgniterOn: return "Heating";
-    case State::Startup_PuffFan: return "Kindling Burn";
-    case State::Startup_Stabilize: return "Stabilizing Burn";
-    case State::Auto_LoadRecipe: return "Loading Recipe";
-    case State::Auto_NextStep: return "Loading Next Step";
-    case State::Auto_RunStep: return "Running Recipe";
-    case State::Auto_EndRecipe: return "Recipe Complete";
-    case State::Auto_Run: return "Running";
-    case State::Shutdown_Cool: return "Cooldown";
-    case State::Shutdown_AllOff: return "Off";
-    case State::Manual_Run: return "Manual Mode";
-    default: return "Unknown";
+    case State::InitialConditions:
+        return "Check for Hot Start";
+    case State::Startup_WaitForStart:
+        return "Waiting for Start";
+    case State::Startup_FillFirePot:
+        return "Filling";
+    case State::Startup_IgniterOn:
+        return "Heating";
+    case State::Startup_PuffFan:
+        return "Kindling Burn";
+    case State::Startup_Stabilize:
+        return "Stabilizing Burn";
+    case State::Auto_LoadRecipe:
+        return "Loading Recipe";
+    case State::Auto_NextStep:
+        return "Loading Next Step";
+    case State::Auto_RunStep:
+        return "Running Recipe";
+    case State::Auto_EndRecipe:
+        return "Recipe Complete";
+    case State::Auto_Run:
+        return "Running";
+    case State::Shutdown_Cool:
+        return "Cooldown";
+    case State::Shutdown_AllOff:
+        return "Off";
+    case State::Manual_Run:
+        return "Manual Mode";
+    default:
+        return "Unknown";
     }
 }
 
@@ -88,11 +103,11 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // exit (placeholder)
         if (smokerData.filteredSmokeChamberTemp < smokerConfig.tunable.minAutoRestartTemp)
         {
-            RequestStateTransition(State::Startup_FillFirePot);
+            RequestStateTransition(State::Startup_WaitForStart);
         }
         else if (smokerData.filteredSmokeChamberTemp >= smokerConfig.tunable.minAutoRestartTemp)
         {
-            RequestStateTransition(State::Startup_IgniterOn);        
+            RequestStateTransition(State::Startup_IgniterOn);
         }
 
         // exit cleanup
@@ -133,9 +148,13 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         }
 
         // exit (placeholder)
-        if (stateTimer >= smokerConfig.tunable.startupFillTime) // 3 minutes to fill
+        if (stateTimer >= smokerConfig.tunable.startupFillTime)       
         {
             RequestStateTransition(State::Startup_IgniterOn);
+        }
+        else if (smokerData.filteredFirePotTemp >= smokerConfig.tunable.firePotBurningTemp) // 200 degrees F
+        {
+            RequestStateTransition(State::Startup_Stabilize);
         }
 
         // exit cleanup
@@ -159,7 +178,7 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         {
             RequestStateTransition(State::Startup_PuffFan);
         }
-        else if(smokerData.filteredFirePotTemp >= smokerConfig.tunable.firePotBurningTemp) // 200 degrees F
+        else if (smokerData.filteredFirePotTemp >= smokerConfig.tunable.firePotBurningTemp) // 200 degrees F
         {
             RequestStateTransition(State::Startup_Stabilize);
         }
@@ -175,13 +194,17 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // entry
         if (firstEntry)
         {
-            smokerData.auger.mode = AugerControl::Mode::On;
-            smokerData.fan.mode = FanControl::Mode::Auto;
+            smokerConfig.operating.setpoint = smokerConfig.tunable.minIdleTemp;
+            smokerData.auger.mode = AugerControl::Mode::Auto;
+            smokerData.fan.mode = FanControl::Mode::Override;
             smokerData.igniter.mode = IgniterControl::Mode::On;
+
+            smokerData.fan.dutyCycle = 20.0f;
+            smokerData.fan.frequency = 5.0f;
         }
 
         // exit (placeholder)
-        if (smokerData.filteredFirePotTemp >= smokerConfig.tunable.firePotBurningTemp || 
+        if (smokerData.filteredFirePotTemp >= smokerConfig.tunable.firePotBurningTemp ||
             smokerData.filteredSmokeChamberTemp >= smokerConfig.tunable.minAutoRestartTemp)
         {
             RequestStateTransition(State::Startup_Stabilize);
@@ -199,22 +222,22 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
 
         if (firstEntry)
         {
-            smokerConfig.operating.setpoint = smokerConfig.tunable.minIdleTemp; // 175 degrees F
+            smokerConfig.operating.setpoint = smokerConfig.tunable.minIdleTemp;
 
             smokerData.auger.mode = AugerControl::Mode::Auto;
-            smokerData.fan.mode = FanControl::Mode::Auto;
-            smokerData.igniter.mode = IgniterControl::Mode::Off;    
-            idleTempReached = false;   
+            smokerData.fan.mode = FanControl::Mode::On;
+            smokerData.igniter.mode = IgniterControl::Mode::Off;
+            idleTempReached = false;
         }
 
-        if(smokerData.filteredSmokeChamberTemp >= smokerConfig.tunable.minIdleTemp)
+        if (smokerData.filteredSmokeChamberTemp >= smokerConfig.tunable.minIdleTemp)
         {
             idleTempReached = true;
         }
         else
         {
             idleTempReached = false;
-            stateTimer = 0; //reset timer if temp drops below setpoint
+            stateTimer = 0; // reset timer if temp drops below setpoint
         }
 
         // exit (placeholder)
@@ -265,7 +288,7 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         {
             smokerData.auger.mode = AugerControl::Mode::Auto;
             smokerData.fan.mode = FanControl::Mode::Auto;
-            smokerData.igniter.mode = IgniterControl::Mode::Off; 
+            smokerData.igniter.mode = IgniterControl::Mode::Off;
 
             smokerConfig.operating.setpoint = smokerConfig.recipe.recipeData[smokerConfig.recipe.selectedRecipeIndex].steps[smokerConfig.recipe.recipeStepIndex].startTempSetpoint;
             smokerConfig.operating.smokesetpoint = smokerConfig.recipe.recipeData[smokerConfig.recipe.selectedRecipeIndex].steps[smokerConfig.recipe.recipeStepIndex].startSmokeSetpoint;
@@ -294,13 +317,12 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // entry
         if (firstEntry)
         {
-            
         }
 
         // during
 
         // exit (placeholder)
-        if (smokerConfig.recipe.recipeStepIndex < (MAX_RECIPE_STEPS -1))
+        if (smokerConfig.recipe.recipeStepIndex < (MAX_RECIPE_STEPS - 1))
         {
             smokerConfig.recipe.recipeStepIndex++;
             RequestStateTransition(State::Auto_RunStep);
@@ -336,13 +358,13 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         }
         break;
 
-        case State::Auto_Run:
+    case State::Auto_Run:
         // entry
         if (firstEntry)
         {
             smokerData.auger.mode = AugerControl::Mode::Auto;
             smokerData.fan.mode = FanControl::Mode::Auto;
-            smokerData.igniter.mode = IgniterControl::Mode::Off; 
+            smokerData.igniter.mode = IgniterControl::Mode::Off;
         }
 
         // during
@@ -355,7 +377,7 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         {
             smokerData.auger.mode = AugerControl::Mode::Off;
             smokerData.fan.mode = FanControl::Mode::On;
-            smokerData.igniter.mode = IgniterControl::Mode::Off; 
+            smokerData.igniter.mode = IgniterControl::Mode::Off;
         }
 
         // during
@@ -379,7 +401,7 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         {
             smokerData.auger.mode = AugerControl::Mode::Off;
             smokerData.fan.mode = FanControl::Mode::Off;
-            smokerData.igniter.mode = IgniterControl::Mode::Off; 
+            smokerData.igniter.mode = IgniterControl::Mode::Off;
         }
 
         // during
@@ -391,7 +413,7 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         {
             smokerData.auger.mode = AugerControl::Mode::Manual;
             smokerData.fan.mode = FanControl::Mode::Manual;
-            smokerData.igniter.mode = IgniterControl::Mode::Off; 
+            // smokerData.igniter.mode = IgniterControl::Mode::Off; allow the user to modify igniter state
         }
 
         // during
@@ -427,12 +449,14 @@ SmokerStateMachine::State SmokerStateMachine::GetActiveState() const
 void SmokerStateMachine::RequestStateTransition(SmokerStateMachine::State state)
 {
     // Ignore requests that would not change the state.
-    if (state == activeState) {
+    if (state == activeState)
+    {
         return;
     }
 
     // If the same request is already queued, do nothing.
-    if (transitionRequested && requestedState == state) {
+    if (transitionRequested && requestedState == state)
+    {
         return;
     }
 
@@ -448,4 +472,4 @@ void SmokerStateMachine::ForceStateTransition(SmokerStateMachine::State state)
     transitionRequested = false;
     firstEntry = true;
     resetTimer = true;
-} 
+}
