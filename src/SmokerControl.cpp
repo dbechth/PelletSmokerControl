@@ -27,7 +27,7 @@ SmokerData smokerData = {
 
 SmokerConfig smokerConfig = {
 	.operating = {
-		.setpoint = 175.0f,
+		.setpoint = 200.0f,
 		.smokesetpoint = 0.0f},
 	.tunable = {
 		.minAutoRestartTemp = 100.0f,
@@ -67,9 +67,9 @@ SmokerConfig smokerConfig = {
 	.recipe = {.recipeStepIndex = 0, .selectedRecipeIndex = -1},
 	.logging = {
 		.enabled = true,
-		.logIntervalMs = 60000,
-		.maxLogFiles = 2,
-		.maxLogFileSizeBytes = 100000}};
+		.logIntervalMs = 30000,
+		.maxLogFiles = 1,
+		.maxLogFileSizeBytes = 500000}};
 
 UserInputs uiData = {
 	.btn_Startup = false,

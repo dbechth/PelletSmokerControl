@@ -327,8 +327,8 @@
             }
 
             .card {
-                padding: 12px;
-                margin-bottom: 12px;
+                padding: 8px;
+                margin-bottom: 8px;
             }
 
             .card h2 {
@@ -346,7 +346,7 @@
 
             .grid {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
+                gap: 6px;
             }
 
             .grid.grid-3col {
@@ -354,7 +354,7 @@
             }
 
             .stat {
-                padding: 10px;
+                padding: 6px;
             }
 
             .stat label {
@@ -363,38 +363,38 @@
             }
 
             .stat .value {
-                font-size: 20px;
+                font-size: 18px;
             }
 
             .form-group {
-                margin-bottom: 10px;
+                margin-bottom: 6px;
             }
 
             .form-group label {
-                font-size: 13px;
-                margin-bottom: 4px;
+                font-size: 12px;
+                margin-bottom: 2px;
             }
 
             .form-group input,
             .form-group select {
-                padding: 8px;
-                font-size: 13px;
+                padding: 6px;
+                font-size: 12px;
             }
 
             .btn-save {
-                padding: 10px;
-                font-size: 13px;
-                margin-top: 8px;
+                padding: 8px;
+                font-size: 12px;
+                margin-top: 6px;
             }
 
             .control-btn {
-                padding: 12px;
-                font-size: 14px;
+                padding: 10px;
+                font-size: 13px;
             }
 
             .btn-download {
-                padding: 10px;
-                font-size: 13px;
+                padding: 8px;
+                font-size: 12px;
             }
         }
     </style>
@@ -474,7 +474,7 @@
                         <div class="value" id="fanStatus">OFF</div>
                     </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
                     <div>
                         <h3 style="margin: 0 0 8px 0; font-size: 0.95em; border-bottom: 1px solid #555; padding-bottom: 6px;">
                             Auger</h3>
@@ -492,7 +492,7 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn-save" onclick="saveActuatorValues()" style="margin-top: 10px;">Save Actuator
+                <button class="btn-save" onclick="saveActuatorValues()" style="margin-top: 6px;">Save Actuator
                     Values</button>
             </div>
         </div>
@@ -1291,6 +1291,9 @@
                     return;
                 }
 
+                // Sort by timestamp so newest is on the right
+                const sortedData = result.data.slice().sort((a, b) => a.timestamp - b.timestamp);
+
                 // Process data
                 const labels = [];
                 const datasets = [];
@@ -1304,9 +1307,9 @@
                 const fanDutyData = [];
 
                 // Get the first timestamp to calculate relative time
-                const startTime = result.data[0].timestamp;
+                const startTime = sortedData[0].timestamp;
 
-                result.data.forEach(entry => {
+                sortedData.forEach(entry => {
                     const relativeTime = Math.floor((entry.timestamp - startTime) / 60000); // minutes
                     labels.push(relativeTime);
                     smokeChamberData.push(entry.smokeChamberTemp);
