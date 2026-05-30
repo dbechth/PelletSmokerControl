@@ -194,13 +194,12 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         // entry
         if (firstEntry)
         {
-            smokerConfig.operating.setpoint = smokerConfig.tunable.minIdleTemp;
             smokerData.auger.mode = AugerControl::Mode::Auto;
-            smokerData.fan.mode = FanControl::Mode::Override;
+            smokerData.fan.mode = FanControl::Mode::On;
             smokerData.igniter.mode = IgniterControl::Mode::On;
 
-            smokerData.fan.dutyCycle = 20.0f;
-            smokerData.fan.frequency = 5.0f;
+            //smokerData.fan.dutyCycle = 20.0f;
+            //smokerData.fan.frequency = 5.0f;
         }
 
         // exit (placeholder)
@@ -366,7 +365,12 @@ void SmokerStateMachine::Run(unsigned long taskRateMs)
         }
 
         // during
-        // consider adding logic to detect flameout here!!!
+
+        // exit (placeholder)
+        if (smokerData.filteredFirePotTemp <= smokerConfig.tunable.firePotBurningTemp)
+        {
+            RequestStateTransition(State::Startup_PuffFan);
+        }
         break;
 
     case State::Shutdown_Cool:

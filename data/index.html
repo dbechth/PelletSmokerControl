@@ -35,7 +35,154 @@
 
         h1 {
             color: #ff6b35;
-            margin-bottom: 10px;
+            margin: 0;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .connection-strip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-icon {
+            width: 26px;
+            height: 26px;
+            min-width: 26px;
+            min-height: 26px;
+            border: 1px solid #444;
+            border-radius: 7px;
+            background: #1a1a1a;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-conn .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #888;
+            transition: background 0.2s ease;
+        }
+
+        .status-conn .mark {
+            width: 12px;
+            height: 12px;
+            display: none;
+        }
+
+        .status-conn .mark path {
+            stroke: #ef5350;
+            stroke-width: 2.4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        .status-quality {
+            gap: 2px;
+            align-items: flex-end;
+            padding-bottom: 5px;
+        }
+
+        .status-quality .bar {
+            width: 4px;
+            border-radius: 2px;
+            background: #555;
+            transition: background 0.2s ease;
+        }
+
+        .status-quality .b1 {
+            height: 6px;
+        }
+
+        .status-quality .b2 {
+            height: 10px;
+        }
+
+        .status-quality .b3 {
+            height: 14px;
+        }
+
+        .status-online {
+            border-color: #2e7d32;
+        }
+
+        .status-online .dot,
+        .quality-excellent .bar {
+            background: #4caf50;
+            border-color: #4caf50;
+        }
+
+        .status-online .dot {
+            display: none;
+        }
+
+        .status-online .mark {
+            display: block;
+        }
+
+        .status-online .mark path {
+            stroke: #4caf50;
+        }
+
+        .status-connecting {
+            border-color: #f57c00;
+        }
+
+        .status-connecting .dot,
+        .quality-good .bar {
+            background: #ffb74d;
+            border-color: #ffb74d;
+        }
+
+        .status-offline {
+            border-color: #b71c1c;
+        }
+
+        .status-offline .dot,
+        .quality-poor .bar,
+        .quality-offline .bar {
+            background: #ef5350;
+            border-color: #ef5350;
+        }
+
+        .status-offline .dot,
+        .status-remote .dot {
+            display: none;
+        }
+
+        .status-offline .mark,
+        .status-remote .mark {
+            display: block;
+        }
+
+        .status-offline .mark path {
+            stroke: #ef5350;
+        }
+
+        .status-remote {
+            border-color: #1565c0;
+        }
+
+        .status-remote .dot,
+        .quality-remote .bar {
+            background: #42a5f5;
+            border-color: #42a5f5;
+        }
+
+        .status-remote .mark path {
+            stroke: #42a5f5;
         }
 
         .nav {
@@ -128,18 +275,39 @@
             padding-top: 10px;
         }
 
-        .graph-options {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
+        .graph-options-table {
+            width: 100%;
+            border-collapse: collapse;
             margin-top: 8px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            overflow: hidden;
         }
 
-        .graph-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .graph-options-table tr + tr {
+            border-top: 1px solid #333;
+        }
+
+        .graph-options-table td {
+            padding: 8px 10px;
+            vertical-align: middle;
+        }
+
+        .graph-options-table .option-label {
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+
+        .graph-options-table .option-check {
+            width: 60px;
+            text-align: center;
+        }
+
+        .graph-options-table input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
         }
 
         .grid {
@@ -312,7 +480,21 @@
 
             h1 {
                 font-size: 22px;
-                margin-bottom: 5px;
+            }
+
+            .header-top {
+                gap: 8px;
+            }
+
+            .connection-strip {
+                gap: 6px;
+            }
+
+            .status-icon {
+                width: 24px;
+                height: 24px;
+                min-width: 24px;
+                min-height: 24px;
             }
 
             .nav {
@@ -403,7 +585,20 @@
 <body>
     <div class="container">
         <header>
-            <h1>Pellet Smoker Control</h1>
+            <div class="header-top">
+                <h1>Pellet Smoker Control</h1>
+                <div class="connection-strip">
+                    <span id="connStateBadge" class="status-icon status-conn status-offline" title="Realtime disconnected" aria-label="Realtime disconnected">
+                        <span class="dot"></span>
+                        <svg class="mark" viewBox="0 0 16 16" aria-hidden="true">
+                            <path d="M3.5 8l2.4 2.4L12.5 4.8"></path>
+                        </svg>
+                    </span>
+                    <span id="connQualityBadge" class="status-icon status-quality quality-offline" title="Quality offline" aria-label="Quality offline">
+                        <span class="bar b1"></span><span class="bar b2"></span><span class="bar b3"></span>
+                    </span>
+                </div>
+            </div>
         </header>
 
         <div class="nav">
@@ -569,7 +764,7 @@
                         <thead>
                             <tr style="background: #333;">
                                 <th style="padding: 8px; border: 1px solid #555; text-align: left;">Duty Cycle (%)</th>
-                                <th style="padding: 8px; border: 1px solid #555; text-align: left;">Target Temp (F)</th>
+                                <th style="padding: 8px; border: 1px solid #555; text-align: left;">Target Smoke (%)</th>
                             </tr>
                         </thead>
                         <tbody id="fanTableBody">
@@ -619,28 +814,16 @@
                 <div id="spiffsMessage" class="message"></div>
             </div>
             <div class="card">
-                <h2>Temperature Alerts</h2>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="alertsEnabled" onchange="updateAlertSettings()"> Enable Temperature Alerts
-                    </label>
-                </div>
-                <div class="form-group">
-                    <label>Minimum Temperature (°F)</label>
-                    <input type="number" id="minTempInput" min="0" max="500" step="1" value="150" onchange="updateAlertSettings()">
-                </div>
-                <div class="form-group">
-                    <label>Maximum Temperature (°F)</label>
-                    <input type="number" id="maxTempInput" min="0" max="500" step="1" value="300" onchange="updateAlertSettings()">
-                </div>
-                <button class="btn-save" onclick="requestNotificationPermission()">Enable Notifications</button>
-            </div>
-            <div class="card">
                 <h2>Data Logging</h2>
                 <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="loggingEnabled"> Enable Data Logging
-                    </label>
+                    <table class="graph-options-table" aria-label="Data logging option">
+                        <tbody>
+                            <tr>
+                                <td class="option-label">Enable Data Logging</td>
+                                <td class="option-check"><input type="checkbox" id="loggingEnabled" aria-label="Enable Data Logging"></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
                 <div class="form-group">
                     <label>Log Interval (seconds)</label>
@@ -653,6 +836,50 @@
                 <div class="form-group">
                     <label>Max File Size (KB)</label>
                     <input type="number" id="maxLogFileSize" min="10" max="1000" step="10" value="100">
+                </div>
+                <div class="form-group">
+                    <label>Smoke Chamber Temp Threshold (F)</label>
+                    <input type="number" id="smokeChamberTempThreshold" min="0" step="0.1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Fire Pot Temp Threshold (F)</label>
+                    <input type="number" id="firePotTempThreshold" min="0" step="0.1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Setpoint Threshold (F)</label>
+                    <input type="number" id="setpointThreshold" min="0" step="0.1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Smoke Setpoint Threshold</label>
+                    <input type="number" id="smokeSetpointThreshold" min="0" step="0.1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Igniter Mode Threshold</label>
+                    <input type="number" id="igniterModeThreshold" min="0" step="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Auger Mode Threshold</label>
+                    <input type="number" id="augerModeThreshold" min="0" step="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Auger Duty Cycle Threshold (%)</label>
+                    <input type="number" id="augerDutyCycleThreshold" min="0" step="0.1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Auger Frequency Threshold</label>
+                    <input type="number" id="augerFrequencyThreshold" min="0" step="0.1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Fan Mode Threshold</label>
+                    <input type="number" id="fanModeThreshold" min="0" step="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Fan Duty Cycle Threshold (%)</label>
+                    <input type="number" id="fanDutyCycleThreshold" min="0" step="0.1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Fan Frequency Threshold</label>
+                    <input type="number" id="fanFrequencyThreshold" min="0" step="0.1" value="1">
                 </div>
                 <button class="btn-save" onclick="saveLoggingConfig()">Save Logging Config</button>
                 <button class="btn-download" onclick="downloadActiveLog()">Download Active Log</button>
@@ -689,62 +916,125 @@
             </div>
             <div class="form-group">
                 <label>Display Options</label>
-                <div class="graph-options">
-                    <label class="graph-option">
-                        <input type="checkbox" id="showSmokeChamber" checked onchange="updateGraph()">
-                        <span>Smoke Chamber Temp</span>
-                    </label>
-                    <label class="graph-option">
-                        <input type="checkbox" id="showFirePot" onchange="updateGraph()">
-                        <span>Fire Pot Temp</span>
-                    </label>
-                    <label class="graph-option">
-                        <input type="checkbox" id="showSetpoint" checked onchange="updateGraph()">
-                        <span>Setpoint</span>
-                    </label>
-                    <label class="graph-option">
-                        <input type="checkbox" id="showSmokeSetpoint" onchange="updateGraph()">
-                        <span>Smoke Setpoint</span>
-                    </label>
-                    <label class="graph-option">
-                        <input type="checkbox" id="showAugerDuty" onchange="updateGraph()">
-                        <span>Auger Duty Cycle</span>
-                    </label>
-                    <label class="graph-option">
-                        <input type="checkbox" id="showFanDuty" onchange="updateGraph()">
-                        <span>Fan Duty Cycle</span>
-                    </label>
-                </div>
+                <table class="graph-options-table" aria-label="Graph display options">
+                    <tbody>
+                        <tr>
+                            <td class="option-label">Smoke Chamber Temp</td>
+                            <td class="option-check"><input type="checkbox" id="showSmokeChamber" checked onchange="updateGraph()" aria-label="Show Smoke Chamber Temp"></td>
+                        </tr>
+                        <tr>
+                            <td class="option-label">Fire Pot Temp</td>
+                            <td class="option-check"><input type="checkbox" id="showFirePot" onchange="updateGraph()" aria-label="Show Fire Pot Temp"></td>
+                        </tr>
+                        <tr>
+                            <td class="option-label">Setpoint</td>
+                            <td class="option-check"><input type="checkbox" id="showSetpoint" checked onchange="updateGraph()" aria-label="Show Setpoint"></td>
+                        </tr>
+                        <tr>
+                            <td class="option-label">Smoke Setpoint</td>
+                            <td class="option-check"><input type="checkbox" id="showSmokeSetpoint" onchange="updateGraph()" aria-label="Show Smoke Setpoint"></td>
+                        </tr>
+                        <tr>
+                            <td class="option-label">Auger Duty Cycle</td>
+                            <td class="option-check"><input type="checkbox" id="showAugerDuty" onchange="updateGraph()" aria-label="Show Auger Duty Cycle"></td>
+                        </tr>
+                        <tr>
+                            <td class="option-label">Fan Duty Cycle</td>
+                            <td class="option-check"><input type="checkbox" id="showFanDuty" onchange="updateGraph()" aria-label="Show Fan Duty Cycle"></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script>
         const API_BASE = '/api';
-        let statusRefreshInterval;
+        let realtimeSocket = null;
+        let realtimeReconnectTimer = null;
+        let realtimeConnected = false;
+        let realtimeLastMessageAt = 0;
+        let realtimeAvgIntervalMs = 0;
+        let realtimeMessageCount = 0;
+        let realtimeStatusText = 'Disconnected';
+        let realtimeEverConnected = false;
+        let realtimeRetryCount = 0;
+        let realtimeRetryDelayMs = 2000;
+        let realtimeNextRetryAt = 0;
+        const REALTIME_RETRY_MAX_MS = 30000;
+        const REALTIME_FALLBACK_THRESHOLD = 4;
+        let statusRefreshInterval = null;
         let dataChart = null;
         let wakeLock = null;
-        let tempAlertSettings = { minTemp: 0, maxTemp: 500, enabled: false, alertedLow: false, alertedHigh: false };
 
-        // Load alert settings from localStorage
-        function loadAlertSettings() {
-            const saved = localStorage.getItem('tempAlertSettings');
-            if (saved) {
-                tempAlertSettings = JSON.parse(saved);
-            }
-            updateAlertUI();
+        function connectionQualityLabel(stalenessMs, avgIntervalMs) {
+            if (realtimeStatusText === 'Remote Mode') return 'Remote';
+            if (!realtimeConnected) return 'Offline';
+            if (stalenessMs > 6000) return 'Poor';
+            if (avgIntervalMs <= 700) return 'Excellent';
+            if (avgIntervalMs <= 1300) return 'Good';
+            if (avgIntervalMs <= 2500) return 'Fair';
+            return 'Poor';
         }
 
-        // Save alert settings to localStorage
-        function saveAlertSettings() {
-            localStorage.setItem('tempAlertSettings', JSON.stringify(tempAlertSettings));
+        function scheduleRealtimeRetry() {
+            if (realtimeReconnectTimer) {
+                return;
+            }
+
+            realtimeRetryCount++;
+            realtimeNextRetryAt = Date.now() + realtimeRetryDelayMs;
+            if (!realtimeEverConnected && realtimeRetryCount >= REALTIME_FALLBACK_THRESHOLD) {
+                realtimeStatusText = 'Remote Mode';
+            } else {
+                realtimeStatusText = 'Reconnecting';
+            }
+            updateConnectionIndicator();
+
+            realtimeReconnectTimer = setTimeout(() => {
+                realtimeReconnectTimer = null;
+                connectRealtime();
+            }, realtimeRetryDelayMs);
+
+            realtimeRetryDelayMs = Math.min(realtimeRetryDelayMs * 2, REALTIME_RETRY_MAX_MS);
         }
 
-        // Request notification permission
-        function requestNotificationPermission() {
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
+        function updateConnectionIndicator() {
+            const stateEl = document.getElementById('connStateBadge');
+            const qualityEl = document.getElementById('connQualityBadge');
+            const now = Date.now();
+            const stalenessMs = realtimeLastMessageAt > 0 ? (now - realtimeLastMessageAt) : Number.POSITIVE_INFINITY;
+            const quality = connectionQualityLabel(stalenessMs, realtimeAvgIntervalMs || 9999);
+
+            stateEl.classList.remove('status-online', 'status-connecting', 'status-offline', 'status-remote');
+            if (realtimeConnected) {
+                stateEl.classList.add('status-online');
+            } else if (realtimeStatusText === 'Connecting' || realtimeStatusText === 'Reconnecting') {
+                stateEl.classList.add('status-connecting');
+            } else if (realtimeStatusText === 'Remote Mode') {
+                stateEl.classList.add('status-remote');
+            } else {
+                stateEl.classList.add('status-offline');
             }
+            stateEl.title = `Realtime: ${realtimeStatusText}`;
+            stateEl.setAttribute('aria-label', `Realtime: ${realtimeStatusText}`);
+
+            qualityEl.classList.remove('quality-excellent', 'quality-good', 'quality-fair', 'quality-poor', 'quality-remote', 'quality-offline');
+            if (quality === 'Excellent') {
+                qualityEl.classList.add('quality-excellent');
+            } else if (quality === 'Good') {
+                qualityEl.classList.add('quality-good');
+            } else if (quality === 'Fair') {
+                qualityEl.classList.add('quality-fair');
+            } else if (quality === 'Remote') {
+                qualityEl.classList.add('quality-remote');
+            } else if (quality === 'Poor') {
+                qualityEl.classList.add('quality-poor');
+            } else {
+                qualityEl.classList.add('quality-offline');
+            }
+            qualityEl.title = `Quality: ${quality}`;
+            qualityEl.setAttribute('aria-label', `Quality: ${quality}`);
         }
 
         document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -788,65 +1078,119 @@
             }
         }
 
+        function applyStatusData(data) {
+            document.getElementById('smokeChamberTemp').textContent = (data.smokeChamberTemp != null ? data.smokeChamberTemp.toFixed(1) : '--') + 'F';
+            document.getElementById('firePotTemp').textContent = (data.firePotTemp != null ? data.firePotTemp.toFixed(1) : '--') + 'F';
+            document.getElementById('setpoint').textContent = (data.operating?.setpoint != null ? data.operating.setpoint.toFixed(1) : '--') + 'F';
+            document.getElementById('smokeSetpoint').textContent = (data.operating?.smokesetpoint != null ? data.operating.smokesetpoint.toFixed(1) : '--');
+            document.getElementById('activeState').textContent = data.operating?.activeState || '--';
+            document.getElementById('igniterStatus').textContent = data.igniterMode === 0 ? 'OFF' : 'ON';
+            const augerModes = ['OFF', 'ON', 'Auto', 'Manual', 'Mass'];
+            document.getElementById('augerStatus').textContent = augerModes[data.augerMode] || 'OFF';
+            const fanModes = ['OFF', 'ON', 'Auto', 'Manual', 'Override'];
+            document.getElementById('fanStatus').textContent = fanModes[data.fanMode] || 'OFF';
+
+            const augerDCInput = document.getElementById('augerDutyCycle');
+            const fanDCInput = document.getElementById('fanDutyCycle');
+
+            if (data.augerMode !== 3 && document.activeElement !== augerDCInput) {
+                augerDCInput.value = (data.augerDutyCycle || 0).toString();
+            }
+
+            if (data.fanMode !== 3 && document.activeElement !== fanDCInput) {
+                fanDCInput.value = (data.fanDutyCycle || 0).toString();
+            }
+        }
+
+        function applyButtonData(data) {
+            const buttons = ['btn_Startup', 'btn_Auto', 'btn_Shutdown', 'btn_Manual'];
+            buttons.forEach(btn => {
+                const button = document.getElementById(btn);
+                const isActive = data[btn];
+                if (isActive) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+        }
+
+        function buildRealtimeUrl() {
+            const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            return `${scheme}://${window.location.hostname}:81`;
+        }
+
+        function connectRealtime() {
+            if (realtimeSocket && (realtimeSocket.readyState === WebSocket.OPEN || realtimeSocket.readyState === WebSocket.CONNECTING)) {
+                return;
+            }
+
+            realtimeStatusText = realtimeEverConnected ? 'Reconnecting' : 'Connecting';
+            updateConnectionIndicator();
+
+            const wsUrl = buildRealtimeUrl();
+            realtimeSocket = new WebSocket(wsUrl);
+
+            realtimeSocket.onopen = () => {
+                realtimeConnected = true;
+                realtimeEverConnected = true;
+                realtimeRetryCount = 0;
+                realtimeRetryDelayMs = 2000;
+                realtimeNextRetryAt = 0;
+                realtimeStatusText = 'Connected';
+                if (realtimeReconnectTimer) {
+                    clearTimeout(realtimeReconnectTimer);
+                    realtimeReconnectTimer = null;
+                }
+                console.log('Realtime connected:', wsUrl);
+                updateConnectionIndicator();
+            };
+
+            realtimeSocket.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    const now = Date.now();
+                    if (realtimeLastMessageAt > 0) {
+                        const intervalMs = now - realtimeLastMessageAt;
+                        if (realtimeAvgIntervalMs === 0) {
+                            realtimeAvgIntervalMs = intervalMs;
+                        } else {
+                            realtimeAvgIntervalMs = (realtimeAvgIntervalMs * 0.8) + (intervalMs * 0.2);
+                        }
+                    }
+                    realtimeLastMessageAt = now;
+                    realtimeMessageCount++;
+                    if (msg.type === 'snapshot') {
+                        if (msg.status) {
+                            applyStatusData(msg.status);
+                        }
+                        if (msg.buttons) {
+                            applyButtonData(msg.buttons);
+                        }
+                    }
+                    updateConnectionIndicator();
+                } catch (error) {
+                    console.error('Realtime message parse error:', error);
+                }
+            };
+
+            realtimeSocket.onerror = (event) => {
+                console.error('Realtime socket error:', event);
+            };
+
+            realtimeSocket.onclose = () => {
+                realtimeConnected = false;
+                scheduleRealtimeRetry();
+            };
+        }
+
         async function refreshStatus() {
             try {
                 const response = await fetch(API_BASE + '/status');
                 const data = await response.json();
-                document.getElementById('smokeChamberTemp').textContent = (data.smokeChamberTemp != null ? data.smokeChamberTemp.toFixed(1) : '--') + 'F';
-                document.getElementById('firePotTemp').textContent = (data.firePotTemp != null ? data.firePotTemp.toFixed(1) : '--') + 'F';
-                document.getElementById('setpoint').textContent = (data.operating?.setpoint != null ? data.operating.setpoint.toFixed(1) : '--') + 'F';
-                document.getElementById('smokeSetpoint').textContent = (data.operating?.smokesetpoint != null ? data.operating.smokesetpoint.toFixed(1) : '--');
-                document.getElementById('activeState').textContent = data.operating?.activeState || '--';
-                document.getElementById('igniterStatus').textContent = data.igniterMode === 0 ? 'OFF' : 'ON';
-                const augerModes = ['OFF', 'ON', 'Auto', 'Manual', 'Mass'];
-                document.getElementById('augerStatus').textContent = augerModes[data.augerMode] || 'OFF';
-                const fanModes = ['OFF', 'ON', 'Auto', 'Manual', 'Override'];
-                document.getElementById('fanStatus').textContent = fanModes[data.fanMode] || 'OFF';
-
-                // Check temperature alerts
-                if (tempAlertSettings.enabled && 'Notification' in window && Notification.permission === 'granted' && data.smokeChamberTemp != null) {
-                    const smokeChamberTemp = data.smokeChamberTemp;
-                    
-                    if (smokeChamberTemp < tempAlertSettings.minTemp && !tempAlertSettings.alertedLow) {
-                        new Notification('Temperature Alert', {
-                            body: 'Smoke chamber temperature dropped below ' + tempAlertSettings.minTemp + '°F',
-                            icon: '/favicon.ico',
-                            tag: 'temp-low-alert'
-                        });
-                        tempAlertSettings.alertedLow = true;
-                        tempAlertSettings.alertedHigh = false;
-                    } else if (smokeChamberTemp >= tempAlertSettings.minTemp && tempAlertSettings.alertedLow) {
-                        tempAlertSettings.alertedLow = false;
-                    }
-                    
-                    if (smokeChamberTemp > tempAlertSettings.maxTemp && !tempAlertSettings.alertedHigh) {
-                        new Notification('Temperature Alert', {
-                            body: 'Smoke chamber temperature exceeded ' + tempAlertSettings.maxTemp + '°F',
-                            icon: '/favicon.ico',
-                            tag: 'temp-high-alert'
-                        });
-                        tempAlertSettings.alertedHigh = true;
-                        tempAlertSettings.alertedLow = false;
-                    } else if (smokeChamberTemp <= tempAlertSettings.maxTemp && tempAlertSettings.alertedHigh) {
-                        tempAlertSettings.alertedHigh = false;
-                    }
-                }
-
-                // Update duty cycle inputs from status, but only if not in Manual mode and not currently being edited
-                const augerDCInput = document.getElementById('augerDutyCycle');
-                const fanDCInput = document.getElementById('fanDutyCycle');
-
-                // Auger mode 3 = Manual, only update if not Manual and not focused
-                if (data.augerMode !== 3 && document.activeElement !== augerDCInput) {
-                    augerDCInput.value = (data.augerDutyCycle || 0).toString();
-                }
-
-                // Fan mode 3 = Manual, only update if not Manual and not focused
-                if (data.fanMode !== 3 && document.activeElement !== fanDCInput) {
-                    fanDCInput.value = (data.fanDutyCycle || 0).toString();
-                }
-
+                applyStatusData(data);
                 refreshButtons();
+
             } catch (error) { console.error('Error:', error); }
         }
 
@@ -958,20 +1302,6 @@
             } catch (error) { console.error('Error:', error); }
         }
 
-        function updateAlertUI() {
-            document.getElementById('alertsEnabled').checked = tempAlertSettings.enabled;
-            document.getElementById('minTempInput').value = tempAlertSettings.minTemp;
-            document.getElementById('maxTempInput').value = tempAlertSettings.maxTemp;
-        }
-
-        function updateAlertSettings() {
-            tempAlertSettings.enabled = document.getElementById('alertsEnabled').checked;
-            tempAlertSettings.minTemp = parseFloat(document.getElementById('minTempInput').value) || 0;
-            tempAlertSettings.maxTemp = parseFloat(document.getElementById('maxTempInput').value) || 500;
-            saveAlertSettings();
-        }
-
-
         async function loadTunableParams() {
             try {
                 const response = await fetch(API_BASE + '/tunable');
@@ -998,19 +1328,19 @@
                         const cell1 = row.insertCell(0);
                         cell1.style.padding = '8px';
                         cell1.style.borderRight = '1px solid #555';
-                        cell1.textContent = point[0].toFixed(0) + '%';
+                        const dutyInput = document.createElement('input');
+                        dutyInput.type = 'number';
+                        dutyInput.value = point[0].toFixed(0);
+                        dutyInput.step = '1';
+                        dutyInput.min = '0';
+                        dutyInput.max = '100';
+                        dutyInput.style.width = '100%';
+                        dutyInput.id = 'augerDuty_' + idx;
+                        cell1.appendChild(dutyInput);
 
                         const cell2 = row.insertCell(1);
                         cell2.style.padding = '8px';
-                        const input = document.createElement('input');
-                        input.type = 'number';
-                        input.value = point[1].toFixed(1);
-                        input.step = '1';
-                        input.min = '0';
-                        input.max = '500';
-                        input.style.width = '100%';
-                        input.id = 'augerTemp_' + idx;
-                        cell2.appendChild(input);
+                        cell2.textContent = point[1].toFixed(1);
                     });
                 }
 
@@ -1025,19 +1355,19 @@
                         const cell1 = row.insertCell(0);
                         cell1.style.padding = '8px';
                         cell1.style.borderRight = '1px solid #555';
-                        cell1.textContent = point[0].toFixed(0) + '%';
+                        const dutyInput = document.createElement('input');
+                        dutyInput.type = 'number';
+                        dutyInput.value = point[0].toFixed(0);
+                        dutyInput.step = '1';
+                        dutyInput.min = '0';
+                        dutyInput.max = '100';
+                        dutyInput.style.width = '100%';
+                        dutyInput.id = 'fanDuty_' + idx;
+                        cell1.appendChild(dutyInput);
 
                         const cell2 = row.insertCell(1);
                         cell2.style.padding = '8px';
-                        const input = document.createElement('input');
-                        input.type = 'number';
-                        input.value = point[1].toFixed(1);
-                        input.step = '1';
-                        input.min = '0';
-                        input.max = '500';
-                        input.style.width = '100%';
-                        input.id = 'fanTemp_' + idx;
-                        cell2.appendChild(input);
+                        cell2.textContent = point[1].toFixed(1);
                     });
                 }
             } catch (error) { console.error('Error:', error); }
@@ -1049,21 +1379,23 @@
                 const response1 = await fetch(API_BASE + '/tunable');
                 const currentData = await response1.json();
 
-                // Collect auger transfer function data - preserve duty cycles, update temps
+                // Collect auger transfer function data - update duty cycles, preserve target temps
                 const augerTransferFunc = [];
-                for (let i = 0; i < 11; i++) {
-                    const tempInput = document.getElementById('augerTemp_' + i);
-                    if (tempInput && currentData.augerTransferFunc && currentData.augerTransferFunc[i]) {
-                        augerTransferFunc.push([currentData.augerTransferFunc[i][0], parseFloat(tempInput.value)]);
+                const augerPoints = currentData.augerTransferFunc || [];
+                for (let i = 0; i < augerPoints.length; i++) {
+                    const dutyInput = document.getElementById('augerDuty_' + i);
+                    if (dutyInput) {
+                        augerTransferFunc.push([parseFloat(dutyInput.value), augerPoints[i][1]]);
                     }
                 }
 
-                // Collect fan transfer function data - preserve duty cycles, update temps
+                // Collect fan transfer function data - update duty cycles, preserve target smoke values
                 const fanTransferFunc = [];
-                for (let i = 0; i < 11; i++) {
-                    const tempInput = document.getElementById('fanTemp_' + i);
-                    if (tempInput && currentData.fanTransferFunc && currentData.fanTransferFunc[i]) {
-                        fanTransferFunc.push([currentData.fanTransferFunc[i][0], parseFloat(tempInput.value)]);
+                const fanPoints = currentData.fanTransferFunc || [];
+                for (let i = 0; i < fanPoints.length; i++) {
+                    const dutyInput = document.getElementById('fanDuty_' + i);
+                    if (dutyInput) {
+                        fanTransferFunc.push([parseFloat(dutyInput.value), fanPoints[i][1]]);
                     }
                 }
 
@@ -1228,6 +1560,17 @@
                 document.getElementById('logInterval').value = data.logIntervalMs / 1000;
                 document.getElementById('maxLogFiles').value = data.maxLogFiles;
                 document.getElementById('maxLogFileSize').value = data.maxLogFileSizeBytes / 1000;
+                document.getElementById('smokeChamberTempThreshold').value = data.smokeChamberTempThreshold ?? 1;
+                document.getElementById('firePotTempThreshold').value = data.firePotTempThreshold ?? 1;
+                document.getElementById('setpointThreshold').value = data.setpointThreshold ?? 1;
+                document.getElementById('smokeSetpointThreshold').value = data.smokeSetpointThreshold ?? 1;
+                document.getElementById('igniterModeThreshold').value = data.igniterModeThreshold ?? 1;
+                document.getElementById('augerModeThreshold').value = data.augerModeThreshold ?? 1;
+                document.getElementById('augerDutyCycleThreshold').value = data.augerDutyCycleThreshold ?? 1;
+                document.getElementById('augerFrequencyThreshold').value = data.augerFrequencyThreshold ?? 1;
+                document.getElementById('fanModeThreshold').value = data.fanModeThreshold ?? 1;
+                document.getElementById('fanDutyCycleThreshold').value = data.fanDutyCycleThreshold ?? 1;
+                document.getElementById('fanFrequencyThreshold').value = data.fanFrequencyThreshold ?? 1;
             } catch (error) { console.error('Error loading logging config:', error); }
         }
 
@@ -1237,7 +1580,18 @@
                     enabled: document.getElementById('loggingEnabled').checked,
                     logIntervalMs: parseInt(document.getElementById('logInterval').value) * 1000,
                     maxLogFiles: parseInt(document.getElementById('maxLogFiles').value),
-                    maxLogFileSizeBytes: parseInt(document.getElementById('maxLogFileSize').value) * 1000
+                    maxLogFileSizeBytes: parseInt(document.getElementById('maxLogFileSize').value) * 1000,
+                    smokeChamberTempThreshold: parseFloat(document.getElementById('smokeChamberTempThreshold').value),
+                    firePotTempThreshold: parseFloat(document.getElementById('firePotTempThreshold').value),
+                    setpointThreshold: parseFloat(document.getElementById('setpointThreshold').value),
+                    smokeSetpointThreshold: parseFloat(document.getElementById('smokeSetpointThreshold').value),
+                    igniterModeThreshold: parseInt(document.getElementById('igniterModeThreshold').value),
+                    augerModeThreshold: parseInt(document.getElementById('augerModeThreshold').value),
+                    augerDutyCycleThreshold: parseFloat(document.getElementById('augerDutyCycleThreshold').value),
+                    augerFrequencyThreshold: parseFloat(document.getElementById('augerFrequencyThreshold').value),
+                    fanModeThreshold: parseInt(document.getElementById('fanModeThreshold').value),
+                    fanDutyCycleThreshold: parseFloat(document.getElementById('fanDutyCycleThreshold').value),
+                    fanFrequencyThreshold: parseFloat(document.getElementById('fanFrequencyThreshold').value)
                 };
                 const response = await fetch(API_BASE + '/logging/config', {
                     method: 'POST',
@@ -1291,8 +1645,8 @@
                     return;
                 }
 
-                // Sort by timestamp so newest is on the right
-                const sortedData = result.data.slice().sort((a, b) => a.timestamp - b.timestamp);
+                // Data is emitted from the backend in chronological order.
+                const sortedData = result.data;
 
                 // Process data
                 const labels = [];
@@ -1306,18 +1660,18 @@
                 const augerDutyData = [];
                 const fanDutyData = [];
 
-                // Get the first timestamp to calculate relative time
+                // Use elapsed minutes from first sample in current window.
                 const startTime = sortedData[0].timestamp;
 
                 sortedData.forEach(entry => {
-                    const relativeTime = Math.floor((entry.timestamp - startTime) / 60000); // minutes
-                    labels.push(relativeTime);
-                    smokeChamberData.push(entry.smokeChamberTemp);
-                    firePotData.push(entry.firePotTemp);
-                    setpointData.push(entry.setpoint);
-                    smokeSetpointData.push(entry.smokeSetpoint);
-                    augerDutyData.push(entry.augerDutyCycle);
-                    fanDutyData.push(entry.fanDutyCycle);
+                    const elapsedMinutes = (entry.timestamp - startTime) / 60000;
+                    labels.push(Number.isFinite(elapsedMinutes) ? elapsedMinutes.toFixed(1) : '0.0');
+                    smokeChamberData.push(Number(entry.smokeChamberTemp));
+                    firePotData.push(Number(entry.firePotTemp));
+                    setpointData.push(Number(entry.setpoint));
+                    smokeSetpointData.push(Number(entry.smokeSetpoint));
+                    augerDutyData.push(Number(entry.augerDutyCycle));
+                    fanDutyData.push(Number(entry.fanDutyCycle));
                 });
 
                 // Build datasets based on checkboxes
@@ -1423,7 +1777,7 @@
                             x: {
                                 title: {
                                     display: true,
-                                    text: 'Time (minutes ago)',
+                                    text: 'Elapsed Time (minutes)',
                                     color: '#333'
                                 },
                                 ticks: { color: '#333' },
@@ -1465,12 +1819,17 @@
         }
 
         refreshStatus();
+        connectRealtime();
+        updateConnectionIndicator();
         // Populate inputs from persisted operating params once on initial load
         loadOperatingParams();
         loadActuatorValues();
-        loadAlertSettings();
-        requestNotificationPermission();
-        statusRefreshInterval = setInterval(refreshStatus, 1000);
+        statusRefreshInterval = setInterval(() => {
+            if (!realtimeConnected) {
+                refreshStatus();
+            }
+            updateConnectionIndicator();
+        }, 2000);
     </script>
 </body>
 

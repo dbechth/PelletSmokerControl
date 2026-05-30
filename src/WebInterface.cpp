@@ -2,13 +2,27 @@
 #include <SPIFFS.h>
 #include <functional>
 #include "DataLogger.h"
+#include "SPIFFSHandlers.h"
 
-WebInterface::WebInterface(uint16_t port) : server(new WebServer(port)), ownsServer(true) {}
+WebInterface::WebInterface(uint16_t port) : server(new WebServer(port)), wsServer(new WebSocketsServer(81)), ownsServer(true) {}
 
-WebInterface::WebInterface(WebServer &existingServer) : server(&existingServer), ownsServer(false) {}
+WebInterface::WebInterface(WebServer &existingServer) : server(&existingServer), wsServer(new WebSocketsServer(81)), ownsServer(false) {}
 
 WebInterface::~WebInterface()
 {
+    if (realtimeTaskHandle != nullptr)
+    {
+        vTaskDelete(realtimeTaskHandle);
+        realtimeTaskHandle = nullptr;
+    }
+
+    if (wsServer)
+    {
+        wsServer->disconnect();
+        delete wsServer;
+        wsServer = nullptr;
+    }
+
     if (ownsServer && server)
     {
         server->stop();
@@ -46,6 +60,25 @@ void WebInterface::begin()
     server->onNotFound(std::bind(&WebInterface::handleNotFound, this));
 
     server->begin();
+    if (wsServer)
+    {
+        wsServer->begin();
+        wsServer->onEvent([this](uint8_t clientId, WStype_t type, uint8_t *payload, size_t length)
+                          { handleWsEvent(clientId, type, payload, length); });
+    }
+
+    if (realtimeTaskHandle == nullptr)
+    {
+        xTaskCreatePinnedToCore(
+            realtimeTaskEntryPoint,
+            "RealtimeWsTask",
+            4096,
+            this,
+            1,
+            &realtimeTaskHandle,
+            1);
+    }
+
     Serial.println("Web server started");
 }
 
@@ -57,6 +90,137 @@ void WebInterface::handleClient()
 void WebInterface::stop()
 {
     server->stop();
+    if (wsServer)
+    {
+        wsServer->disconnect();
+    }
+}
+
+void WebInterface::realtimeTaskEntryPoint(void *parameter)
+{
+    WebInterface *instance = static_cast<WebInterface *>(parameter);
+    if (instance != nullptr)
+    {
+        instance->realtimeTaskLoop();
+    }
+    vTaskDelete(nullptr);
+}
+
+void WebInterface::realtimeTaskLoop()
+{
+    for (;;)
+    {
+        if (wsServer)
+        {
+            wsServer->loop();
+            broadcastRealtimeSnapshot(false);
+        }
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+void WebInterface::handleWsEvent(uint8_t clientId, WStype_t type, uint8_t *payload, size_t length)
+{
+    if (!wsServer)
+    {
+        return;
+    }
+
+    switch (type)
+    {
+    case WStype_CONNECTED:
+    {
+        StaticJsonDocument<128> helloDoc;
+        helloDoc["type"] = "hello";
+        helloDoc["protocol"] = 1;
+        helloDoc["timestamp"] = millis();
+        String hello;
+        serializeJson(helloDoc, hello);
+        wsServer->sendTXT(clientId, hello);
+        broadcastRealtimeSnapshot(true);
+        break;
+    }
+    case WStype_TEXT:
+    {
+        String message;
+        message.reserve(length);
+        for (size_t i = 0; i < length; i++)
+        {
+            message += static_cast<char>(payload[i]);
+        }
+        if (message == "snapshot")
+        {
+            String snapshot;
+            buildRealtimeSnapshot(snapshot);
+            wsServer->sendTXT(clientId, snapshot);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+void WebInterface::buildRealtimeSnapshot(String &outJson)
+{
+    StaticJsonDocument<1024> doc;
+    doc["type"] = "snapshot";
+    doc["timestamp"] = millis();
+
+    JsonObject status = doc.createNestedObject("status");
+    status["smokeChamberTemp"] = smokerData.filteredSmokeChamberTemp;
+    status["firePotTemp"] = smokerData.filteredFirePotTemp;
+    status["operating"]["setpoint"] = smokerConfig.operating.setpoint;
+    status["operating"]["smokesetpoint"] = smokerConfig.operating.smokesetpoint;
+    status["operating"]["activeState"] = smokerConfig.operating.activeState;
+    status["igniterMode"] = static_cast<int>(smokerData.igniter.mode);
+    status["augerMode"] = static_cast<int>(smokerData.auger.mode);
+    status["augerDutyCycle"] = smokerData.auger.dutyCycle;
+    status["augerFrequency"] = smokerData.auger.frequency;
+    status["fanMode"] = static_cast<int>(smokerData.fan.mode);
+    status["fanDutyCycle"] = smokerData.fan.dutyCycle;
+    status["fanFrequency"] = smokerData.fan.frequency;
+
+    JsonObject buttons = doc.createNestedObject("buttons");
+    buttons["btn_Startup"] = uiData.btn_Startup;
+    buttons["btn_Auto"] = uiData.btn_Auto;
+    buttons["btn_Shutdown"] = uiData.btn_Shutdown;
+    buttons["btn_Manual"] = uiData.btn_Manual;
+
+    serializeJson(doc, outJson);
+}
+
+void WebInterface::broadcastRealtimeSnapshot(bool forceBroadcast)
+{
+    if (!wsServer)
+    {
+        return;
+    }
+
+    const unsigned long now = millis();
+    const unsigned long minPublishIntervalMs = 500;
+    const unsigned long heartbeatIntervalMs = 5000;
+    const bool heartbeatDue = (now - lastHeartbeatMs) >= heartbeatIntervalMs;
+
+    if (!forceBroadcast && !heartbeatDue && (now - lastBroadcastMs) < minPublishIntervalMs)
+    {
+        return;
+    }
+
+    String payload;
+    buildRealtimeSnapshot(payload);
+
+    const bool changed = payload != lastSnapshotPayload;
+    if (forceBroadcast || changed || heartbeatDue)
+    {
+        wsServer->broadcastTXT(payload);
+        lastSnapshotPayload = payload;
+        lastBroadcastMs = now;
+        if (heartbeatDue)
+        {
+            lastHeartbeatMs = now;
+        }
+    }
 }
 
 void WebInterface::handleRoot()
@@ -410,117 +574,22 @@ void WebInterface::handleNotFound()
 
 void WebInterface::handleSPIFFSList()
 {
-    StaticJsonDocument<1024> doc;
-    JsonArray files = doc.createNestedArray("files");
-
-    File root = SPIFFS.open("/");
-    if (!root)
-    {
-        server->send(500, "application/json", "{\"status\":\"cannot open root\"}");
-        return;
-    }
-
-    File file = root.openNextFile();
-    while (file)
-    {
-        JsonObject f = files.createNestedObject();
-        f["name"] = String(file.name());
-        f["size"] = file.size();
-        file = root.openNextFile();
-    }
-    root.close();
-
-    String resp;
-    serializeJson(doc, resp);
-    server->send(200, "application/json", resp);
+    SpiffsHandlers::HandleList(*server);
 }
 
 void WebInterface::handleSPIFFSDownload()
 {
-    String path = server->arg("path");
-    if (path.length() == 0)
-    {
-        server->send(400, "application/json", "{\"status\":\"missing path\"}");
-        return;
-    }
-    if (!path.startsWith("/"))
-        path = "/" + path;
-
-    if (!SPIFFS.exists(path))
-    {
-        server->send(404, "application/json", "{\"status\":\"file not found\"}");
-        return;
-    }
-
-    File file = SPIFFS.open(path, "r");
-    if (!file)
-    {
-        server->send(500, "application/json", "{\"status\":\"unable to open file\"}");
-        return;
-    }
-
-    String filename = path;
-    filename.remove(0, filename.lastIndexOf('/') + 1);
-    server->sendHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
-    server->streamFile(file, "application/octet-stream");
-    file.close();
+    SpiffsHandlers::HandleDownload(*server);
 }
 
 void WebInterface::handleSPIFFSUpload()
 {
-    String path = server->arg("path");
-    if (path.length() == 0)
-    {
-        server->send(400, "application/json", "{\"status\":\"missing path\"}");
-        return;
-    }
-    if (!path.startsWith("/"))
-        path = "/" + path;
-
-    if (!server->hasArg("plain"))
-    {
-        server->send(400, "application/json", "{\"status\":\"missing body\"}");
-        return;
-    }
-
-    String body = server->arg("plain");
-    File file = SPIFFS.open(path, "w");
-    if (!file)
-    {
-        server->send(500, "application/json", "{\"status\":\"cannot open file for writing\"}");
-        return;
-    }
-    file.write((const uint8_t *)body.c_str(), body.length());
-    file.close();
-
-    server->send(200, "application/json", "{\"status\":\"ok\"}");
+    SpiffsHandlers::HandleUpload(*server);
 }
 
 void WebInterface::handleSPIFFSDelete()
 {
-    String path = server->arg("path");
-    if (path.length() == 0)
-    {
-        server->send(400, "application/json", "{\"status\":\"missing path\"}");
-        return;
-    }
-    if (!path.startsWith("/"))
-        path = "/" + path;
-
-    if (!SPIFFS.exists(path))
-    {
-        server->send(404, "application/json", "{\"status\":\"file not found\"}");
-        return;
-    }
-
-    if (SPIFFS.remove(path))
-    {
-        server->send(200, "application/json", "{\"status\":\"deleted\"}");
-    }
-    else
-    {
-        server->send(500, "application/json", "{\"status\":\"delete failed\"}");
-    }
+    SpiffsHandlers::HandleDelete(*server);
 }
 
 void WebInterface::handleGetButtons()
@@ -620,13 +689,24 @@ void WebInterface::handleReboot()
 
 void WebInterface::handleGetLoggingConfig()
 {
-    StaticJsonDocument<256> doc;
+    StaticJsonDocument<768> doc;
     LogConfig config = DataLogger::getConfig();
 
     doc["enabled"] = config.enabled;
     doc["logIntervalMs"] = config.logIntervalMs;
     doc["maxLogFiles"] = config.maxLogFiles;
     doc["maxLogFileSizeBytes"] = config.maxLogFileSizeBytes;
+    doc["smokeChamberTempThreshold"] = config.smokeChamberTempThreshold;
+    doc["firePotTempThreshold"] = config.firePotTempThreshold;
+    doc["setpointThreshold"] = config.setpointThreshold;
+    doc["smokeSetpointThreshold"] = config.smokeSetpointThreshold;
+    doc["igniterModeThreshold"] = config.igniterModeThreshold;
+    doc["augerModeThreshold"] = config.augerModeThreshold;
+    doc["augerDutyCycleThreshold"] = config.augerDutyCycleThreshold;
+    doc["augerFrequencyThreshold"] = config.augerFrequencyThreshold;
+    doc["fanModeThreshold"] = config.fanModeThreshold;
+    doc["fanDutyCycleThreshold"] = config.fanDutyCycleThreshold;
+    doc["fanFrequencyThreshold"] = config.fanFrequencyThreshold;
     doc["activeLogFile"] = DataLogger::getActiveLogFile();
 
     String response;
@@ -638,7 +718,7 @@ void WebInterface::handleSetLoggingConfig()
 {
     if (server->hasArg("plain"))
     {
-        StaticJsonDocument<256> doc;
+        StaticJsonDocument<768> doc;
         if (deserializeJson(doc, server->arg("plain")) == DeserializationError::Ok)
         {
             LogConfig config = DataLogger::getConfig();
@@ -651,6 +731,28 @@ void WebInterface::handleSetLoggingConfig()
                 config.maxLogFiles = doc["maxLogFiles"];
             if (doc.containsKey("maxLogFileSizeBytes"))
                 config.maxLogFileSizeBytes = doc["maxLogFileSizeBytes"];
+            if (doc.containsKey("smokeChamberTempThreshold"))
+                config.smokeChamberTempThreshold = doc["smokeChamberTempThreshold"];
+            if (doc.containsKey("firePotTempThreshold"))
+                config.firePotTempThreshold = doc["firePotTempThreshold"];
+            if (doc.containsKey("setpointThreshold"))
+                config.setpointThreshold = doc["setpointThreshold"];
+            if (doc.containsKey("smokeSetpointThreshold"))
+                config.smokeSetpointThreshold = doc["smokeSetpointThreshold"];
+            if (doc.containsKey("igniterModeThreshold"))
+                config.igniterModeThreshold = doc["igniterModeThreshold"];
+            if (doc.containsKey("augerModeThreshold"))
+                config.augerModeThreshold = doc["augerModeThreshold"];
+            if (doc.containsKey("augerDutyCycleThreshold"))
+                config.augerDutyCycleThreshold = doc["augerDutyCycleThreshold"];
+            if (doc.containsKey("augerFrequencyThreshold"))
+                config.augerFrequencyThreshold = doc["augerFrequencyThreshold"];
+            if (doc.containsKey("fanModeThreshold"))
+                config.fanModeThreshold = doc["fanModeThreshold"];
+            if (doc.containsKey("fanDutyCycleThreshold"))
+                config.fanDutyCycleThreshold = doc["fanDutyCycleThreshold"];
+            if (doc.containsKey("fanFrequencyThreshold"))
+                config.fanFrequencyThreshold = doc["fanFrequencyThreshold"];
 
             DataLogger::setConfig(config);
 
@@ -659,6 +761,17 @@ void WebInterface::handleSetLoggingConfig()
             smokerConfig.logging.logIntervalMs = config.logIntervalMs;
             smokerConfig.logging.maxLogFiles = config.maxLogFiles;
             smokerConfig.logging.maxLogFileSizeBytes = config.maxLogFileSizeBytes;
+            smokerConfig.logging.smokeChamberTempThreshold = config.smokeChamberTempThreshold;
+            smokerConfig.logging.firePotTempThreshold = config.firePotTempThreshold;
+            smokerConfig.logging.setpointThreshold = config.setpointThreshold;
+            smokerConfig.logging.smokeSetpointThreshold = config.smokeSetpointThreshold;
+            smokerConfig.logging.igniterModeThreshold = config.igniterModeThreshold;
+            smokerConfig.logging.augerModeThreshold = config.augerModeThreshold;
+            smokerConfig.logging.augerDutyCycleThreshold = config.augerDutyCycleThreshold;
+            smokerConfig.logging.augerFrequencyThreshold = config.augerFrequencyThreshold;
+            smokerConfig.logging.fanModeThreshold = config.fanModeThreshold;
+            smokerConfig.logging.fanDutyCycleThreshold = config.fanDutyCycleThreshold;
+            smokerConfig.logging.fanFrequencyThreshold = config.fanFrequencyThreshold;
             SaveConfigToSPIFFS(smokerConfig);
 
             server->send(200, "application/json", "{\"status\":\"ok\"}");
@@ -740,18 +853,57 @@ void WebInterface::handleGetLogData()
         requestedMs = (unsigned long)durationMinutes * 60000UL;
     }
 
-    unsigned long nowMs = millis();
-    unsigned long cutoffTime = 0;
-    if (requestedMs > 0 && requestedMs < nowMs)
+    // Pass 1: determine latest synthetic timestamp while accounting for resets.
+    // Sparse rows are supported by preserving empty CSV tokens.
+    if (file.available())
     {
-        cutoffTime = nowMs - requestedMs;
+        file.readStringUntil('\n');
     }
 
-    // Read and parse CSV
+    unsigned long latestSyntheticTs = 0;
+    unsigned long previousRawTs = 0;
+    unsigned long rolloverOffset = 0;
+    bool hasPreviousRawTs = false;
+
+    while (file.available())
+    {
+        String line = file.readStringUntil('\n');
+        line.trim();
+        if (line.length() == 0)
+            continue;
+
+        int commaPos = line.indexOf(',');
+        if (commaPos <= 0)
+            continue;
+
+        unsigned long rawTs = line.substring(0, commaPos).toInt();
+        if (hasPreviousRawTs && rawTs < previousRawTs)
+        {
+            rolloverOffset += previousRawTs;
+        }
+
+        unsigned long syntheticTs = rawTs + rolloverOffset;
+        latestSyntheticTs = syntheticTs;
+        previousRawTs = rawTs;
+        hasPreviousRawTs = true;
+    }
+
+    unsigned long cutoffTime = 0;
+    if (requestedMs > 0 && latestSyntheticTs > requestedMs)
+    {
+        cutoffTime = latestSyntheticTs - requestedMs;
+    }
+
+    file.seek(0, SeekSet);
+
     String response = "{\"data\":[";
     bool firstEntry = true;
-    
-    // Skip header line
+    String lastFieldValues[12];
+    bool hasLastFieldValues = false;
+    previousRawTs = 0;
+    rolloverOffset = 0;
+    hasPreviousRawTs = false;
+
     if (file.available())
     {
         file.readStringUntil('\n');
@@ -761,59 +913,86 @@ void WebInterface::handleGetLogData()
     {
         String line = file.readStringUntil('\n');
         line.trim();
-        if (line.length() == 0) continue;
+        if (line.length() == 0)
+            continue;
 
-        // Parse CSV line
-        int idx = 0;
-        String timestamp = "";
         int commaPos = line.indexOf(',');
-        if (commaPos > 0)
+        if (commaPos <= 0)
+            continue;
+
+        unsigned long rawTs = line.substring(0, commaPos).toInt();
+        if (hasPreviousRawTs && rawTs < previousRawTs)
         {
-            timestamp = line.substring(0, commaPos);
-            unsigned long ts = timestamp.toInt();
-            
-            // Filter by time range
-            if (ts < cutoffTime) continue;
-            
-            if (!firstEntry) response += ",";
-            firstEntry = false;
-            
-            // Convert line to JSON object
-            response += "{\"timestamp\":" + timestamp;
-            
-            String remainder = line.substring(commaPos + 1);
-            const char* fieldNames[] = {"smokeChamberTemp", "firePotTemp", "setpoint", "smokeSetpoint", 
-                                       "activeState", "igniterMode", "augerMode", "augerDutyCycle", 
-                                       "augerFrequency", "fanMode", "fanDutyCycle", "fanFrequency"};
-            
-            for (int i = 0; i < 12; i++)
+            rolloverOffset += previousRawTs;
+        }
+        unsigned long syntheticTs = rawTs + rolloverOffset;
+        previousRawTs = rawTs;
+        hasPreviousRawTs = true;
+
+        if (syntheticTs < cutoffTime)
+            continue;
+
+        if (!firstEntry)
+            response += ",";
+        firstEntry = false;
+
+        response += "{\"timestamp\":" + String(syntheticTs);
+
+        String remainder = line.substring(commaPos + 1);
+        const char *fieldNames[] = {"smokeChamberTemp", "firePotTemp", "setpoint", "smokeSetpoint",
+                                    "activeState", "igniterMode", "augerMode", "augerDutyCycle",
+                                    "augerFrequency", "fanMode", "fanDutyCycle", "fanFrequency"};
+
+        for (int i = 0; i < 12; i++)
+        {
+            String value;
+            if (remainder.length() == 0)
             {
-                commaPos = remainder.indexOf(',');
-                String value;
-                if (commaPos > 0)
+                value = "";
+            }
+            else
+            {
+                int fieldSep = remainder.indexOf(',');
+                if (fieldSep >= 0)
                 {
-                    value = remainder.substring(0, commaPos);
-                    remainder = remainder.substring(commaPos + 1);
+                    value = remainder.substring(0, fieldSep);
+                    remainder = remainder.substring(fieldSep + 1);
                 }
                 else
                 {
                     value = remainder;
+                    remainder = "";
                 }
-                
-                // Add field to JSON
-                if (i == 4) // activeState is a string
+            }
+
+            value.trim();
+            if (value.length() == 0)
+            {
+                if (hasLastFieldValues)
                 {
-                    response += ",\"" + String(fieldNames[i]) + "\":\"" + value + "\"";
+                    value = lastFieldValues[i];
                 }
                 else
                 {
-                    response += ",\"" + String(fieldNames[i]) + "\":" + value;
+                    value = (i == 4) ? String("") : String("0");
                 }
             }
-            response += "}";
+            lastFieldValues[i] = value;
+
+            if (i == 4)
+            {
+                response += ",\"" + String(fieldNames[i]) + "\":\"" + value + "\"";
+            }
+            else
+            {
+                response += ",\"" + String(fieldNames[i]) + "\":" + value;
+            }
         }
+
+        hasLastFieldValues = true;
+        response += "}";
     }
-    
+
     response += "]}";
     file.close();
 

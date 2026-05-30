@@ -23,6 +23,285 @@
 				"uploadfs"
 			],
 			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path)",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Cleanup old IDF venv",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"Remove-Item -Recurse -Force \"C:\\Users\\dbech\\.platformio\\penv\\.espidf-4.4.7\""
+			],
+			"group": "build"
+		},
+		{
+			"label": "Find lock owner for espidf venv",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"Get-Process | Where-Object { $_.Path -like 'C:\\Users\\dbech\\.platformio\\penv\\.espidf-4.4.7*' } | Select-Object Name, Id, Path | Format-Table -AutoSize"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Find lock owner for espidf venv (fixed)",
+			"type": "shell",
+			"command": "Get-Process | Where-Object { $_.Path -like \"C:\\Users\\dbech\\.platformio\\penv\\.espidf-4.4.7*\" } | Select-Object Name, Id, Path | Format-Table -AutoSize",
+			"group": "build"
+		},
+		{
+			"label": "Kill PlatformIO Python processes",
+			"type": "shell",
+			"command": "taskkill /F /IM python.exe /IM platformio.exe",
+			"group": "build"
+		},
+		{
+			"label": "Cleanup old IDF venv retry",
+			"type": "shell",
+			"command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Remove-Item -Recurse -Force 'C:\\Users\\dbech\\.platformio\\penv\\.espidf-4.4.7'\"",
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path)",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path)",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path)",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path)",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path, Silent)",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"-s"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build capture tail",
+			"type": "shell",
+			"command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& 'C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe' run -d 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl' -s *> 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl\\.pio\\build\\last_build.log'; Write-Host 'EXITCODE:'$LASTEXITCODE; Get-Content 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl\\.pio\\build\\last_build.log' -Tail 40\"",
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build capture tail",
+			"type": "shell",
+			"command": "& 'C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe' run -d 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl' -s *> 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl\\.pio\\build\\last_build.log'; Write-Host \"EXITCODE:$LASTEXITCODE\"; Get-Content 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl\\.pio\\build\\last_build.log' -Tail 40",
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build capture tail v2",
+			"type": "shell",
+			"command": "& 'C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe' run -d 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl' -s *> 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl\\.pio\\build\\last_build.log'; Write-Host \"EXITCODE:$LASTEXITCODE\"; Get-Content 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl\\.pio\\build\\last_build.log' -Tail 40",
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build capture tail v3",
+			"type": "shell",
+			"command": "& 'C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe' run -d 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl' -s *> 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl\\.pio\\build\\last_build.log'; Write-Host \"EXITCODE:$LASTEXITCODE\"; Get-Content 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl\\.pio\\build\\last_build.log' -Tail 40",
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build capture tail v4",
+			"type": "shell",
+			"command": "& 'C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe' run -d 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl' -s *> 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl\\.pio\\build\\last_build.log'; Write-Host \"EXITCODE:$LASTEXITCODE\"; Get-Content 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl\\.pio\\build\\last_build.log' -Tail 60",
+			"group": "build"
+		},
+		{
+			"label": "Check running build processes",
+			"type": "shell",
+			"command": "Get-Process platformio,python -ErrorAction SilentlyContinue | Select-Object Name,Id | Format-Table -AutoSize",
+			"group": "build"
+		},
+		{
+			"label": "Check running build processes 2",
+			"type": "shell",
+			"command": "Get-Process platformio -ErrorAction SilentlyContinue | Select-Object Name,Id | Format-Table -AutoSize",
+			"group": "build"
+		},
+		{
+			"label": "Check running build processes 3",
+			"type": "shell",
+			"command": "Get-Process platformio -ErrorAction SilentlyContinue | Select-Object Name,Id | Format-Table -AutoSize",
+			"group": "build"
+		},
+		{
+			"label": "Tail UTF16 build log",
+			"type": "shell",
+			"command": "Get-Content 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl\\.pio\\build\\last_build.log' -Encoding Unicode -Tail 60",
+			"group": "build"
+		},
+		{
+			"label": "Check running build processes 4",
+			"type": "shell",
+			"command": "Get-Process platformio -ErrorAction SilentlyContinue | Select-Object Name,Id | Format-Table -AutoSize",
+			"group": "build"
+		},
+		{
+			"label": "Tail UTF16 build log final",
+			"type": "shell",
+			"command": "Get-Content 'C:\\Users\\dbech\\OneDrive\\Documents\\PlatformIO\\Projects\\PelletSmokerControl\\.pio\\build\\last_build.log' -Encoding Unicode -Tail 120",
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path) verify",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path) verify",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path) verify",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"-s"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path) verify",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path) verify",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path) verify",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path) verify",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"-s"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path) verify",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path) verify",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"-s"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path) verify",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"-s"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path) verify",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"-s"
+			],
+			"group": "build"
+		},
+		{
+			"label": "PlatformIO: Build (Full Path) verify",
+			"type": "shell",
+			"command": "C:\\Users\\dbech\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"-s"
+			],
+			"group": "build"
 		}
 	]
 }

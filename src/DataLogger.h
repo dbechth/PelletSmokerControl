@@ -10,14 +10,19 @@ struct LogConfig
     unsigned long logIntervalMs;     // How often to log (in milliseconds)
     int maxLogFiles;                  // Maximum number of log files to keep
     unsigned long maxLogFileSizeBytes; // Max size per log file before rolling to next
-};
 
-// Default configuration
-const LogConfig DEFAULT_LOG_CONFIG = {
-    .enabled = false,
-    .logIntervalMs = 5000,    // Log every 5 seconds
-    .maxLogFiles = 10,        // Keep 10 log files
-    .maxLogFileSizeBytes = 100000 // 100KB per file
+    // Per-parameter change thresholds for sparse logging
+    float smokeChamberTempThreshold;
+    float firePotTempThreshold;
+    float setpointThreshold;
+    float smokeSetpointThreshold;
+    int igniterModeThreshold;
+    int augerModeThreshold;
+    float augerDutyCycleThreshold;
+    float augerFrequencyThreshold;
+    int fanModeThreshold;
+    float fanDutyCycleThreshold;
+    float fanFrequencyThreshold;
 };
 
 class DataLogger
@@ -46,6 +51,9 @@ public:
 
     // Update the log configuration
     static void setConfig(const LogConfig &config);
+
+    // Choose whether to append to current file or start a fresh file for a new session
+    static void startSession(bool appendToCurrentFile);
 
     // Delete all log files
     static void clearAllLogs();

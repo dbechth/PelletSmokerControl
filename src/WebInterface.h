@@ -1,6 +1,8 @@
 #pragma once
 
+#include <Arduino.h>
 #include <WebServer.h>
+#include <WebSocketsServer.h>
 #include <ArduinoJson.h>
 #include "SmokerControl.h"
 #include "SmokerStateMachine.h"
@@ -17,8 +19,19 @@ public:
 
 private:
     WebServer *server;
+    WebSocketsServer *wsServer;
     bool ownsServer = false;
+    TaskHandle_t realtimeTaskHandle = nullptr;
+    String lastSnapshotPayload;
+    unsigned long lastBroadcastMs = 0;
+    unsigned long lastHeartbeatMs = 0;
     void attachServer(WebServer &existingServer);
+
+    static void realtimeTaskEntryPoint(void *parameter);
+    void realtimeTaskLoop();
+    void handleWsEvent(uint8_t clientId, WStype_t type, uint8_t *payload, size_t length);
+    void buildRealtimeSnapshot(String &outJson);
+    void broadcastRealtimeSnapshot(bool forceBroadcast);
 
     void handleRoot();
     void handleGetStatus();

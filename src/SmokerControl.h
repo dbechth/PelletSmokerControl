@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include "SPIFFSConfig.h"
 
 // Global data structures for the Smoker Control project
 
@@ -119,6 +120,17 @@ struct SmokerConfig
         unsigned long logIntervalMs;
         int maxLogFiles;
         unsigned long maxLogFileSizeBytes;
+        float smokeChamberTempThreshold;
+        float firePotTempThreshold;
+        float setpointThreshold;
+        float smokeSetpointThreshold;
+        int igniterModeThreshold;
+        int augerModeThreshold;
+        float augerDutyCycleThreshold;
+        float augerFrequencyThreshold;
+        int fanModeThreshold;
+        float fanDutyCycleThreshold;
+        float fanFrequencyThreshold;
     };
 
     OperatingParams operating;
@@ -142,6 +154,3 @@ const int Off = LOW;
 extern SmokerData smokerData;
 extern SmokerConfig smokerConfig;
 extern UserInputs uiData;
-
-bool SaveConfigToSPIFFS(const SmokerConfig &config);
-bool LoadConfigFromSPIFFS(SmokerConfig &config);

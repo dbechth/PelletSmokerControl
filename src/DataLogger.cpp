@@ -1,10 +1,49 @@
 #include "DataLogger.h"
 
+#include <math.h>
+
 // Static member initialization
-LogConfig DataLogger::config = DEFAULT_LOG_CONFIG;
+LogConfig DataLogger::config = {};
 unsigned long DataLogger::lastLogTime = 0;
 int DataLogger::currentLogFileIndex = 0;
 unsigned long DataLogger::currentLogFileSize = 0;
+
+namespace
+{
+float clampThreshold(float threshold)
+{
+    return threshold < 0.0f ? 0.0f : threshold;
+}
+
+int clampThreshold(int threshold)
+{
+    return threshold < 0 ? 0 : threshold;
+}
+
+bool hasChanged(float currentValue, float lastValue, float threshold)
+{
+    return fabsf(currentValue - lastValue) >= clampThreshold(threshold);
+}
+
+bool hasChanged(int currentValue, int lastValue, int threshold)
+{
+    return abs(currentValue - lastValue) >= clampThreshold(threshold);
+}
+
+bool hasLastLoggedSample = false;
+float lastSmokeChamberTemp = 0.0f;
+float lastFirePotTemp = 0.0f;
+float lastSetpoint = 0.0f;
+float lastSmokeSetpoint = 0.0f;
+String lastActiveState = "";
+int lastIgniterMode = 0;
+int lastAugerMode = 0;
+float lastAugerDutyCycle = 0.0f;
+float lastAugerFrequency = 0.0f;
+int lastFanMode = 0;
+float lastFanDutyCycle = 0.0f;
+float lastFanFrequency = 0.0f;
+}
 
 void DataLogger::init(const LogConfig &newConfig)
 {
@@ -12,6 +51,7 @@ void DataLogger::init(const LogConfig &newConfig)
     lastLogTime = millis();
     currentLogFileIndex = 0;
     currentLogFileSize = 0;
+    hasLastLoggedSample = false;
 
     if (!config.enabled)
         return;
@@ -86,6 +126,7 @@ void DataLogger::rotateLogFile()
     // Create new log file
     currentLogFileSize = 0;
     createNewLogFile();
+    hasLastLoggedSample = false;
 }
 
 void DataLogger::writeLogHeader()
@@ -124,6 +165,37 @@ void DataLogger::logData(
     if (!config.enabled || !shouldLog())
         return;
 
+    const String activeStateValue = activeState != nullptr ? String(activeState) : String("");
+
+    const bool changedSmokeChamberTemp = !hasLastLoggedSample || hasChanged(smokeChamberTemp, lastSmokeChamberTemp, config.smokeChamberTempThreshold);
+    const bool changedFirePotTemp = !hasLastLoggedSample || hasChanged(firePotTemp, lastFirePotTemp, config.firePotTempThreshold);
+    const bool changedSetpoint = !hasLastLoggedSample || hasChanged(setpoint, lastSetpoint, config.setpointThreshold);
+    const bool changedSmokeSetpoint = !hasLastLoggedSample || hasChanged(smokesetpoint, lastSmokeSetpoint, config.smokeSetpointThreshold);
+    const bool changedActiveState = !hasLastLoggedSample || (activeStateValue != lastActiveState);
+    const bool changedIgniterMode = !hasLastLoggedSample || hasChanged(igniterMode, lastIgniterMode, config.igniterModeThreshold);
+    const bool changedAugerMode = !hasLastLoggedSample || hasChanged(augerMode, lastAugerMode, config.augerModeThreshold);
+    const bool changedAugerDutyCycle = !hasLastLoggedSample || hasChanged(augerDutyCycle, lastAugerDutyCycle, config.augerDutyCycleThreshold);
+    const bool changedAugerFrequency = !hasLastLoggedSample || hasChanged(augerFrequency, lastAugerFrequency, config.augerFrequencyThreshold);
+    const bool changedFanMode = !hasLastLoggedSample || hasChanged(fanMode, lastFanMode, config.fanModeThreshold);
+    const bool changedFanDutyCycle = !hasLastLoggedSample || hasChanged(fanDutyCycle, lastFanDutyCycle, config.fanDutyCycleThreshold);
+    const bool changedFanFrequency = !hasLastLoggedSample || hasChanged(fanFrequency, lastFanFrequency, config.fanFrequencyThreshold);
+
+    if (!(changedSmokeChamberTemp ||
+          changedFirePotTemp ||
+          changedSetpoint ||
+          changedSmokeSetpoint ||
+          changedActiveState ||
+          changedIgniterMode ||
+          changedAugerMode ||
+          changedAugerDutyCycle ||
+          changedAugerFrequency ||
+          changedFanMode ||
+          changedFanDutyCycle ||
+          changedFanFrequency))
+    {
+        return;
+    }
+
     String filepath = getLogFilePath(currentLogFileIndex);
     File file = SPIFFS.open(filepath, "a");
     if (!file)
@@ -132,20 +204,32 @@ void DataLogger::logData(
         return;
     }
 
-    // Format: timestamp,value1,value2,...
+    // Sparse CSV row: unchanged fields are left empty.
     String line = String(millis()) + ",";
-    line += String(smokeChamberTemp, 2) + ",";
-    line += String(firePotTemp, 2) + ",";
-    line += String(setpoint, 2) + ",";
-    line += String(smokesetpoint, 2) + ",";
-    line += String(activeState) + ",";
-    line += String(igniterMode) + ",";
-    line += String(augerMode) + ",";
-    line += String(augerDutyCycle, 2) + ",";
-    line += String(augerFrequency, 2) + ",";
-    line += String(fanMode) + ",";
-    line += String(fanDutyCycle, 2) + ",";
-    line += String(fanFrequency, 2) + "\n";
+    line += changedSmokeChamberTemp ? String(smokeChamberTemp, 2) : String("");
+    line += ",";
+    line += changedFirePotTemp ? String(firePotTemp, 2) : String("");
+    line += ",";
+    line += changedSetpoint ? String(setpoint, 2) : String("");
+    line += ",";
+    line += changedSmokeSetpoint ? String(smokesetpoint, 2) : String("");
+    line += ",";
+    line += changedActiveState ? activeStateValue : String("");
+    line += ",";
+    line += changedIgniterMode ? String(igniterMode) : String("");
+    line += ",";
+    line += changedAugerMode ? String(augerMode) : String("");
+    line += ",";
+    line += changedAugerDutyCycle ? String(augerDutyCycle, 2) : String("");
+    line += ",";
+    line += changedAugerFrequency ? String(augerFrequency, 2) : String("");
+    line += ",";
+    line += changedFanMode ? String(fanMode) : String("");
+    line += ",";
+    line += changedFanDutyCycle ? String(fanDutyCycle, 2) : String("");
+    line += ",";
+    line += changedFanFrequency ? String(fanFrequency, 2) : String("");
+    line += "\n";
 
     file.print(line);
     currentLogFileSize = file.size();
@@ -156,6 +240,20 @@ void DataLogger::logData(
     {
         rotateLogFile();
     }
+
+    hasLastLoggedSample = true;
+    lastSmokeChamberTemp = smokeChamberTemp;
+    lastFirePotTemp = firePotTemp;
+    lastSetpoint = setpoint;
+    lastSmokeSetpoint = smokesetpoint;
+    lastActiveState = activeStateValue;
+    lastIgniterMode = igniterMode;
+    lastAugerMode = augerMode;
+    lastAugerDutyCycle = augerDutyCycle;
+    lastAugerFrequency = augerFrequency;
+    lastFanMode = fanMode;
+    lastFanDutyCycle = fanDutyCycle;
+    lastFanFrequency = fanFrequency;
 
     lastLogTime = millis();
 }
@@ -174,6 +272,28 @@ void DataLogger::setConfig(const LogConfig &newConfig)
     }
 }
 
+void DataLogger::startSession(bool appendToCurrentFile)
+{
+    if (!config.enabled)
+    {
+        return;
+    }
+
+    String filepath = getLogFilePath(currentLogFileIndex);
+    if (!appendToCurrentFile)
+    {
+        if (SPIFFS.exists(filepath))
+        {
+            SPIFFS.remove(filepath);
+        }
+        currentLogFileSize = 0;
+    }
+
+    createNewLogFile();
+    hasLastLoggedSample = false;
+    lastLogTime = millis();
+}
+
 void DataLogger::clearAllLogs()
 {
     for (int i = 0; i < config.maxLogFiles; i++)
@@ -187,6 +307,7 @@ void DataLogger::clearAllLogs()
     currentLogFileIndex = 0;
     currentLogFileSize = 0;
     createNewLogFile();
+    hasLastLoggedSample = false;
 }
 
 void DataLogger::listLogFiles()
